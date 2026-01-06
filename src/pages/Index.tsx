@@ -3,11 +3,13 @@ import { Settings } from "lucide-react";
 import { useTimer } from "@/hooks/useTimer";
 import { useTheme } from "@/hooks/useTheme";
 import { useAudio } from "@/hooks/useAudio";
+import { useMusicStorage } from "@/hooks/useMusicStorage";
 import { ProgressRing } from "@/components/pomodoro/ProgressRing";
 import { TimerDisplay } from "@/components/pomodoro/TimerDisplay";
 import { TimerControls } from "@/components/pomodoro/TimerControls";
 import { SessionIndicator } from "@/components/pomodoro/SessionIndicator";
 import { PlaylistSelector } from "@/components/pomodoro/PlaylistSelector";
+import { MusicUploader } from "@/components/pomodoro/MusicUploader";
 import { NowPlaying } from "@/components/pomodoro/NowPlaying";
 import { ThemeToggle } from "@/components/pomodoro/ThemeToggle";
 import { SettingsPanel } from "@/components/pomodoro/SettingsPanel";
@@ -19,6 +21,7 @@ const Index = () => {
 
   const timer = useTimer({ focusDuration: 25, breakDuration: 5 });
   const audio = useAudio();
+  const musicStorage = useMusicStorage();
 
   // Sync audio with session changes
   useEffect(() => {
@@ -54,6 +57,20 @@ const Index = () => {
       audio.stopAudio();
     } else {
       audio.startAudio(timer.sessionType);
+    }
+  };
+
+  const handleFocusUpload = async (file: File) => {
+    const track = await musicStorage.addTrack(file, "focus");
+    if (track) {
+      audio.selectFocusTrack(track);
+    }
+  };
+
+  const handleBreakUpload = async (file: File) => {
+    const track = await musicStorage.addTrack(file, "break");
+    if (track) {
+      audio.selectBreakTrack(track);
     }
   };
 
@@ -129,11 +146,29 @@ const Index = () => {
               onSelect={audio.setFocusPlaylist}
             />
 
+            <MusicUploader
+              sessionType="focus"
+              tracks={musicStorage.focusTracks}
+              selectedTrackId={audio.selectedFocusTrack?.id ?? null}
+              onUpload={handleFocusUpload}
+              onRemove={musicStorage.removeTrack}
+              onSelect={audio.selectFocusTrack}
+            />
+
             <PlaylistSelector
               sessionType="break"
               playlists={audio.breakPlaylists}
               selected={audio.breakPlaylist}
               onSelect={audio.setBreakPlaylist}
+            />
+
+            <MusicUploader
+              sessionType="break"
+              tracks={musicStorage.breakTracks}
+              selectedTrackId={audio.selectedBreakTrack?.id ?? null}
+              onUpload={handleBreakUpload}
+              onRemove={musicStorage.removeTrack}
+              onSelect={audio.selectBreakTrack}
             />
           </div>
         )}
