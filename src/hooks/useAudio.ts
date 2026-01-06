@@ -1,5 +1,6 @@
 import { useRef, useCallback, useState, useEffect } from "react";
 import type { SessionType } from "./useTimer";
+import type { StoredTrack } from "./useMusicStorage";
 
 export interface Playlist {
   id: string;
@@ -28,6 +29,7 @@ export function useAudio() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const oscillatorRef = useRef<OscillatorNode | null>(null);
   const gainRef = useRef<GainNode | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSession, setCurrentSession] = useState<SessionType>("focus");
 
@@ -37,6 +39,10 @@ export function useAudio() {
   const [breakPlaylist, setBreakPlaylist] = useState<Playlist>(
     BREAK_PLAYLISTS[0]
   );
+
+  // Custom track selection
+  const [selectedFocusTrack, setSelectedFocusTrack] = useState<StoredTrack | null>(null);
+  const [selectedBreakTrack, setSelectedBreakTrack] = useState<StoredTrack | null>(null);
 
   const getFrequencyForPlaylist = (playlist: Playlist, session: SessionType) => {
     // Different ambient frequencies for different moods
@@ -59,13 +65,60 @@ export function useAudio() {
       : breakFreqs[playlist.id] || 180;
   };
 
+  const stopOscillator = useCallback(() => {
+    if (oscillatorRef.current) {
+      oscillatorRef.current.stop();
+      oscillatorRef.current.disconnect();
+      oscillatorRef.current = null;
+    }
+  }, []);
+
+  const stopAudioElement = useCallback(() => {
+    if (audioElementRef.current) {
+      audioElementRef.current.pause();
+      audioElementRef.current.src = "";
+      audioElementRef.current = null;
+    }
+  }, []);
+
+  const stopAudio = useCallback(() => {
+    stopOscillator();
+    stopAudioElement();
+    setIsPlaying(false);
+  }, [stopOscillator, stopAudioElement]);
+
+  const playCustomTrack = useCallback((track: StoredTrack) => {
+    stopOscillator();
+    stopAudioElement();
+
+    const url = URL.createObjectURL(track.blob);
+    const audio = new Audio(url);
+    audio.loop = true;
+    audio.volume = 0.5;
+    audio.play();
+    
+    audioElementRef.current = audio;
+    setIsPlaying(true);
+  }, [stopOscillator, stopAudioElement]);
+
   const startAudio = useCallback(
     (session: SessionType) => {
+      const customTrack = session === "focus" ? selectedFocusTrack : selectedBreakTrack;
+      
+      // If custom track is selected, play it
+      if (customTrack) {
+        playCustomTrack(customTrack);
+        setCurrentSession(session);
+        return;
+      }
+
       const playlist = session === "focus" ? focusPlaylist : breakPlaylist;
       if (playlist.id === "silence") {
         stopAudio();
         return;
       }
+
+      stopAudioElement();
 
       if (!audioContextRef.current) {
         audioContextRef.current = new AudioContext();
@@ -73,11 +126,8 @@ export function useAudio() {
 
       const ctx = audioContextRef.current;
 
-      // Stop existing
-      if (oscillatorRef.current) {
-        oscillatorRef.current.stop();
-        oscillatorRef.current.disconnect();
-      }
+      // Stop existing oscillator
+      stopOscillator();
 
       // Create ambient sound
       const oscillator = ctx.createOscillator();
@@ -98,17 +148,8 @@ export function useAudio() {
       setIsPlaying(true);
       setCurrentSession(session);
     },
-    [focusPlaylist, breakPlaylist]
+    [focusPlaylist, breakPlaylist, selectedFocusTrack, selectedBreakTrack, playCustomTrack, stopAudio, stopOscillator, stopAudioElement]
   );
-
-  const stopAudio = useCallback(() => {
-    if (oscillatorRef.current) {
-      oscillatorRef.current.stop();
-      oscillatorRef.current.disconnect();
-      oscillatorRef.current = null;
-    }
-    setIsPlaying(false);
-  }, []);
 
   const switchToSession = useCallback(
     (session: SessionType) => {
@@ -119,6 +160,31 @@ export function useAudio() {
     },
     [isPlaying, startAudio]
   );
+
+  const selectFocusTrack = useCallback((track: StoredTrack | null) => {
+    setSelectedFocusTrack(track);
+    // Clear preset playlist selection when custom track is selected
+    if (track) {
+      setFocusPlaylist({ id: "custom", name: track.name, icon: "🎵" });
+    }
+  }, []);
+
+  const selectBreakTrack = useCallback((track: StoredTrack | null) => {
+    setSelectedBreakTrack(track);
+    if (track) {
+      setBreakPlaylist({ id: "custom", name: track.name, icon: "🎵" });
+    }
+  }, []);
+
+  const selectFocusPlaylist = useCallback((playlist: Playlist) => {
+    setFocusPlaylist(playlist);
+    setSelectedFocusTrack(null); // Clear custom track when preset is selected
+  }, []);
+
+  const selectBreakPlaylist = useCallback((playlist: Playlist) => {
+    setBreakPlaylist(playlist);
+    setSelectedBreakTrack(null);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -134,8 +200,12 @@ export function useAudio() {
     currentSession,
     focusPlaylist,
     breakPlaylist,
-    setFocusPlaylist,
-    setBreakPlaylist,
+    selectedFocusTrack,
+    selectedBreakTrack,
+    setFocusPlaylist: selectFocusPlaylist,
+    setBreakPlaylist: selectBreakPlaylist,
+    selectFocusTrack,
+    selectBreakTrack,
     startAudio,
     stopAudio,
     switchToSession,
