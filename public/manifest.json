@@ -1,0 +1,16 @@
+{
+  "name": "Anchored Focus",
+  "short_name": "Focus",
+  "description": "Pomodoro timer with anchored focus music method",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0f1a",
+  "theme_color": "#4a7dff",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
