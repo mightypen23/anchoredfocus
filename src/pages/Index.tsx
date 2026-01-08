@@ -8,7 +8,6 @@ import { ProgressRing } from "@/components/pomodoro/ProgressRing";
 import { TimerDisplay } from "@/components/pomodoro/TimerDisplay";
 import { TimerControls } from "@/components/pomodoro/TimerControls";
 import { SessionIndicator } from "@/components/pomodoro/SessionIndicator";
-import { PlaylistSelector } from "@/components/pomodoro/PlaylistSelector";
 import { MusicUploader } from "@/components/pomodoro/MusicUploader";
 import { NowPlaying } from "@/components/pomodoro/NowPlaying";
 import { ThemeToggle } from "@/components/pomodoro/ThemeToggle";
@@ -74,8 +73,8 @@ const Index = () => {
     }
   };
 
-  const currentPlaylist =
-    timer.sessionType === "focus" ? audio.focusPlaylist : audio.breakPlaylist;
+  const currentTrack =
+    timer.sessionType === "focus" ? audio.selectedFocusTrack : audio.selectedBreakTrack;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -123,13 +122,13 @@ const Index = () => {
           {/* Now Playing */}
           <NowPlaying
             isPlaying={audio.isPlaying}
-            playlist={currentPlaylist}
+            track={currentTrack}
             sessionType={timer.sessionType}
             onToggle={toggleAudio}
           />
         </div>
 
-        {/* Settings & Playlists */}
+        {/* Settings & Music */}
         {showSettings && (
           <div className="w-full max-w-md space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <SettingsPanel
@@ -139,13 +138,6 @@ const Index = () => {
               onBreakChange={(v) => timer.updateSettings({ breakDuration: v })}
             />
 
-            <PlaylistSelector
-              sessionType="focus"
-              playlists={audio.focusPlaylists}
-              selected={audio.focusPlaylist}
-              onSelect={audio.setFocusPlaylist}
-            />
-
             <MusicUploader
               sessionType="focus"
               tracks={musicStorage.focusTracks}
@@ -153,13 +145,6 @@ const Index = () => {
               onUpload={handleFocusUpload}
               onRemove={musicStorage.removeTrack}
               onSelect={audio.selectFocusTrack}
-            />
-
-            <PlaylistSelector
-              sessionType="break"
-              playlists={audio.breakPlaylists}
-              selected={audio.breakPlaylist}
-              onSelect={audio.setBreakPlaylist}
             />
 
             <MusicUploader
