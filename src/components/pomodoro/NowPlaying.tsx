@@ -1,30 +1,39 @@
-import { Volume2, VolumeX } from "lucide-react";
+import { Volume2, VolumeX, Music } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import type { Playlist } from "@/hooks/useAudio";
 import type { SessionType } from "@/hooks/useTimer";
+import type { StoredTrack } from "@/hooks/useMusicStorage";
 
 interface NowPlayingProps {
   isPlaying: boolean;
-  playlist: Playlist;
+  track: StoredTrack | null;
   sessionType: SessionType;
   onToggle: () => void;
 }
 
 export function NowPlaying({
   isPlaying,
-  playlist,
+  track,
   sessionType,
   onToggle,
 }: NowPlayingProps) {
   const accentColor = sessionType === "focus" ? "text-focus" : "text-break";
 
+  if (!track) {
+    return (
+      <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-muted/50 border border-border">
+        <Music className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">No music selected</span>
+      </div>
+    );
+  }
+
   return (
     <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-muted/50 border border-border">
-      <span className="text-lg">{playlist.icon}</span>
+      <span className="text-lg">🎵</span>
       <div className="flex flex-col min-w-0">
         <span className="text-xs text-muted-foreground">Now playing</span>
         <span className={`text-sm font-medium truncate ${accentColor}`}>
-          {playlist.name}
+          {track.name}
         </span>
       </div>
       <Button
