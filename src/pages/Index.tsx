@@ -125,6 +125,7 @@ const Index = () => {
             track={currentTrack}
             sessionType={timer.sessionType}
             onToggle={toggleAudio}
+            onOpenSettings={() => setShowSettings(true)}
           />
         </div>
 
