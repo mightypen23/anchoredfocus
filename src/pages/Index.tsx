@@ -141,18 +141,22 @@ const Index = () => {
               sessionType="focus"
               tracks={musicStorage.focusTracks}
               selectedTrackId={audio.selectedFocusTrack?.id ?? null}
+              previewingTrackId={audio.previewingTrackId}
               onUpload={handleFocusUpload}
               onRemove={musicStorage.removeTrack}
               onSelect={audio.selectFocusTrack}
+              onPreview={audio.togglePreview}
             />
 
             <MusicUploader
               sessionType="break"
               tracks={musicStorage.breakTracks}
               selectedTrackId={audio.selectedBreakTrack?.id ?? null}
+              previewingTrackId={audio.previewingTrackId}
               onUpload={handleBreakUpload}
               onRemove={musicStorage.removeTrack}
               onSelect={audio.selectBreakTrack}
+              onPreview={audio.togglePreview}
             />
           </div>
         )}

@@ -4,12 +4,41 @@ import type { StoredTrack } from "./useMusicStorage";
 
 export function useAudio() {
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [previewingTrackId, setPreviewingTrackId] = useState<string | null>(null);
   const [currentSession, setCurrentSession] = useState<SessionType>("focus");
 
   const [selectedFocusTrack, setSelectedFocusTrack] = useState<StoredTrack | null>(null);
   const [selectedBreakTrack, setSelectedBreakTrack] = useState<StoredTrack | null>(null);
 
+  // --- Preview (independent of timer) ---
+  const stopPreview = useCallback(() => {
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current.src = "";
+      previewAudioRef.current = null;
+    }
+    setPreviewingTrackId(null);
+  }, []);
+
+  const togglePreview = useCallback((track: StoredTrack) => {
+    if (previewingTrackId === track.id) {
+      stopPreview();
+      return;
+    }
+    stopPreview();
+    const url = URL.createObjectURL(track.blob);
+    const audio = new Audio(url);
+    audio.loop = false;
+    audio.volume = 0.5;
+    audio.onended = () => setPreviewingTrackId(null);
+    audio.play();
+    previewAudioRef.current = audio;
+    setPreviewingTrackId(track.id);
+  }, [previewingTrackId, stopPreview]);
+
+  // --- Main playback (tied to timer) ---
   const stopAudio = useCallback(() => {
     if (audioElementRef.current) {
       audioElementRef.current.pause();
@@ -27,7 +56,7 @@ export function useAudio() {
   }, []);
 
   const resumeAudio = useCallback(() => {
-    if (audioElementRef.current) {
+    if (audioElementRef.current && audioElementRef.current.src) {
       audioElementRef.current.play();
       setIsPlaying(true);
     }
@@ -35,6 +64,7 @@ export function useAudio() {
 
   const playTrack = useCallback((track: StoredTrack) => {
     stopAudio();
+    stopPreview(); // stop any preview when main playback starts
     const url = URL.createObjectURL(track.blob);
     const audio = new Audio(url);
     audio.loop = true;
@@ -42,7 +72,7 @@ export function useAudio() {
     audio.play();
     audioElementRef.current = audio;
     setIsPlaying(true);
-  }, [stopAudio]);
+  }, [stopAudio, stopPreview]);
 
   const startAudio = useCallback(
     (session: SessionType) => {
@@ -70,29 +100,21 @@ export function useAudio() {
     [selectedFocusTrack, selectedBreakTrack, playTrack, stopAudio]
   );
 
+  // Select track without auto-playing
   const selectFocusTrack = useCallback((track: StoredTrack | null) => {
     setSelectedFocusTrack(track);
-    if (track && currentSession === "focus") {
-      playTrack(track);
-    } else if (!track && currentSession === "focus") {
-      stopAudio();
-    }
-  }, [currentSession, playTrack, stopAudio]);
+  }, []);
 
   const selectBreakTrack = useCallback((track: StoredTrack | null) => {
     setSelectedBreakTrack(track);
-    if (track && currentSession === "break") {
-      playTrack(track);
-    } else if (!track && currentSession === "break") {
-      stopAudio();
-    }
-  }, [currentSession, playTrack, stopAudio]);
+  }, []);
 
   useEffect(() => {
     return () => {
       stopAudio();
+      stopPreview();
     };
-  }, [stopAudio]);
+  }, [stopAudio, stopPreview]);
 
   return {
     isPlaying,
@@ -106,5 +128,8 @@ export function useAudio() {
     pauseAudio,
     resumeAudio,
     switchToSession,
+    previewingTrackId,
+    togglePreview,
+    stopPreview,
   };
 }
