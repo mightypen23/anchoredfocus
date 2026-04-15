@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"; 
 import { Settings } from "lucide-react";
 import { useTimer } from "@/hooks/useTimer";
 import { useTheme } from "@/hooks/useTheme";
