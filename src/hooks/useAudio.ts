@@ -7,7 +7,6 @@ export function useAudio() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSession, setCurrentSession] = useState<SessionType>("focus");
 
-  // Custom track selection
   const [selectedFocusTrack, setSelectedFocusTrack] = useState<StoredTrack | null>(null);
   const [selectedBreakTrack, setSelectedBreakTrack] = useState<StoredTrack | null>(null);
 
@@ -20,15 +19,27 @@ export function useAudio() {
     setIsPlaying(false);
   }, []);
 
+  const pauseAudio = useCallback(() => {
+    if (audioElementRef.current) {
+      audioElementRef.current.pause();
+    }
+    setIsPlaying(false);
+  }, []);
+
+  const resumeAudio = useCallback(() => {
+    if (audioElementRef.current) {
+      audioElementRef.current.play();
+      setIsPlaying(true);
+    }
+  }, []);
+
   const playTrack = useCallback((track: StoredTrack) => {
     stopAudio();
-
     const url = URL.createObjectURL(track.blob);
     const audio = new Audio(url);
     audio.loop = true;
     audio.volume = 0.5;
     audio.play();
-    
     audioElementRef.current = audio;
     setIsPlaying(true);
   }, [stopAudio]);
@@ -36,7 +47,6 @@ export function useAudio() {
   const startAudio = useCallback(
     (session: SessionType) => {
       const customTrack = session === "focus" ? selectedFocusTrack : selectedBreakTrack;
-      
       if (customTrack) {
         playTrack(customTrack);
         setCurrentSession(session);
@@ -62,7 +72,6 @@ export function useAudio() {
 
   const selectFocusTrack = useCallback((track: StoredTrack | null) => {
     setSelectedFocusTrack(track);
-    // Auto-play if this is the current session
     if (track && currentSession === "focus") {
       playTrack(track);
     } else if (!track && currentSession === "focus") {
@@ -94,6 +103,8 @@ export function useAudio() {
     selectBreakTrack,
     startAudio,
     stopAudio,
+    pauseAudio,
+    resumeAudio,
     switchToSession,
   };
 }

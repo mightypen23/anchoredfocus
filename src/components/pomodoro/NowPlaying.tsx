@@ -8,6 +8,7 @@ interface NowPlayingProps {
   track: StoredTrack | null;
   sessionType: SessionType;
   onToggle: () => void;
+  onOpenSettings?: () => void;
 }
 
 export function NowPlaying({
@@ -15,15 +16,19 @@ export function NowPlaying({
   track,
   sessionType,
   onToggle,
+  onOpenSettings,
 }: NowPlayingProps) {
   const accentColor = sessionType === "focus" ? "text-focus" : "text-break";
 
   if (!track) {
     return (
-      <div className="flex items-center gap-3 px-4 py-2 rounded-full bg-muted/50 border border-border">
+      <button
+        onClick={onOpenSettings}
+        className="flex items-center gap-3 px-4 py-2 rounded-full bg-muted/50 border border-border hover:bg-muted transition-colors cursor-pointer"
+      >
         <Music className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">No music selected</span>
-      </div>
+        <span className="text-sm text-muted-foreground">Tap to add music</span>
+      </button>
     );
   }
 
