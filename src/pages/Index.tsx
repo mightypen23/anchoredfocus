@@ -36,7 +36,7 @@ const Index = () => {
 
   const handlePause = () => {
     timer.pause();
-    audio.stopAudio();
+    audio.pauseAudio();
   };
 
   const handleReset = () => {
@@ -45,17 +45,17 @@ const Index = () => {
   };
 
   const handleSkip = () => {
+    const nextSession = timer.sessionType === "focus" ? "break" : "focus";
     timer.skipSession();
-    if (timer.isRunning) {
-      audio.startAudio(timer.sessionType === "focus" ? "break" : "focus");
-    }
+    timer.start();
+    audio.startAudio(nextSession);
   };
 
   const toggleAudio = () => {
     if (audio.isPlaying) {
-      audio.stopAudio();
+      audio.pauseAudio();
     } else {
-      audio.startAudio(timer.sessionType);
+      audio.resumeAudio();
     }
   };
 
