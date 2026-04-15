@@ -45,10 +45,8 @@ const Index = () => {
   };
 
   const handleSkip = () => {
-    const nextSession = timer.sessionType === "focus" ? "break" : "focus";
     timer.skipSession();
     timer.start();
-    audio.startAudio(nextSession);
   };
 
   const toggleAudio = () => {
